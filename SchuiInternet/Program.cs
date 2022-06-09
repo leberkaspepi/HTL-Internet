@@ -36,6 +36,11 @@ public class Program
 
             ReConfigure();
         }
+        finally
+        {
+            Console.WriteLine("Irgend wos hot _wirklich_ ned highaud, start neich");
+            Environment.Exit(1);
+        }
     }
 
     private void Init()
