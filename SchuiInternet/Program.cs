@@ -89,7 +89,9 @@ public class Program {
 
     private void ConnectPost() {
         HttpClient client = new();
-        client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
+        //client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
+
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
 
         Dictionary<string, string> values = new()
         {
