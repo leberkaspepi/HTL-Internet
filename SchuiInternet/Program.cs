@@ -1,8 +1,11 @@
-﻿namespace SchuiInternet;
+﻿using System.Collections.Specialized;
+using System.Net;
 
-public class Program
-{
+namespace SchuiInternet;
+
+public class Program {
     private const string URL = "http://10.10.0.251:8002/index.php?zone=cp_htl";
+    private const string REDIURL = "http://10.10.0.2/captiveportal/cp_logon_done.html";
 
     private string username;
     private string password;
@@ -11,20 +14,17 @@ public class Program
 
     public static void Main(string[] args) => new Program().Init();
 
-    public Program()
-    {
+    public Program() {
         string winUser = Environment.UserName;
         filePath = $@"C:\Users\{winUser}\.conconfig";
 
-        try
-        {
+        try {
             string[] fileText = File.ReadAllLines(filePath);
 
             username = fileText[0];
             password = fileText[1];
         }
-        catch (Exception)
-        {
+        catch (Exception) {
             Console.WriteLine("Irgendwos passt an deim file ned");
 
             Console.WriteLine("Username:");
@@ -38,39 +38,34 @@ public class Program
         }
     }
 
-    private void Init()
-    {
+    private void Init() {
         Console.WriteLine("To see list of availabe commands, type 'IAmAUselessMemberOfSocietyAndRequireALobotomyMarker'");
 
-        while (true)
-        {
+        while (true) {
             Console.WriteLine();
             string input = Console.ReadLine();
 
-            switch (input)
-            {
+            switch (input) {
                 case "connect":
-                    Connect();
-                    break;
+                ConnectPost();
+                break;
                 case "reconfig":
-                    ReConfigure();
-                    break;
+                ReConfigure();
+                break;
                 case "IAmAUselessMemberOfSocietyAndRequireALobotomyMarker":
                 case "help":
-                    DisplayCommands();
-                    break;
+                DisplayCommands();
+                break;
             }
         }
     }
 
-    private void DisplayCommands()
-    {
+    private void DisplayCommands() {
         Console.WriteLine("connect: try to connect with saved credentials");
         Console.WriteLine("reconfig: re-enter credentials\n");
     }
-    
-    private void ReConfigure()
-    {
+
+    private void ReConfigure() {
         File.Delete(filePath);
         File.Create(filePath).Close();
 
@@ -80,8 +75,7 @@ public class Program
         Console.WriteLine("Password:");
         password = Console.ReadLine();
 
-        if (username == null || username == "" || password == null || password == "")
-        {
+        if (username == null || username == "" || password == null || password == "") {
             Console.WriteLine("konnst du wortwörtlich kan string eigebn?");
             Console.WriteLine("kumm geh scheißn und moch da dei config file söwa (oda start afoch donwengung neich)");
 
@@ -93,24 +87,57 @@ public class Program
         Console.WriteLine("perfekt, fetzt");
     }
 
-    private bool Connect()
-    {
+    private void ConnectPost() {
         HttpClient client = new();
+        client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
 
         Dictionary<string, string> values = new()
         {
-            {"auth_user", username },
-            {"auth_pass", password},
+             { "auth_user", username },
+             { "auth_pass", password },
+             { "accept", "Anmelden" },
+             { "rediurl", REDIURL }
         };
 
         var content = new FormUrlEncodedContent(values);
 
-        var response = client.PostAsync(URL, content).Result;
+        var response = client.PostAsync(URL, content);
 
-        var responseString = response.Content.ReadAsStringAsync();
+        var responseString = response.Result.Content.ReadAsStringAsync();
 
         Console.WriteLine(responseString.Result);
-
-        return true;
     }
+
+    // private bool ConnectPost() {
+    //     HttpClient client = new();
+
+    //     Dictionary<string, string> values = new()
+    //     {
+    //         {"auth_user", username},
+    //         {"auth_pass", password},
+    //     };
+
+    //     var content = new FormUrlEncodedContent(values);
+
+    //     var response = client.PostAsync(URL, content).Result;
+
+    //     var responseString = response.Content.ReadAsStringAsync();
+
+    //     Console.WriteLine(responseString.Result);
+
+    //     return true;
+    // }
+
+    // private void ConnectRestSharp() {
+    //     var client = new RestClient("http://10.10.0.251:8002/index.php?zone=cp_htl");
+    //     client.Timeout = -1;
+    //     var request = new RestRequest(Method.POST);
+    //     request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
+    //     request.AddParameter("auth_user", "KellermayrJ180130");
+    //     request.AddParameter("auth_pass", "chiligreen123");
+    //     request.AddParameter("accept", "Anmelden");
+    //     request.AddParameter("rediurl", "http://10.10.0.2/captiveportal/cp_logon_done.html");
+    //     IRestResponse response = client.Execute(request);
+    //     Console.WriteLine(response.Content);
+    // }
 }
