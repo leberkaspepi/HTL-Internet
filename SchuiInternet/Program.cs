@@ -1,7 +1,4 @@
-﻿using System.Collections.Specialized;
-using System.Net;
-
-namespace SchuiInternet;
+﻿namespace SchuiInternet;
 
 public class Program {
     private const string URL = "http://10.10.0.251:8002/index.php?zone=cp_htl";
@@ -27,19 +24,12 @@ public class Program {
         catch (Exception) {
             Console.WriteLine("Irgendwos passt an deim file ned");
 
-            Console.WriteLine("Username:");
-            username = Console.ReadLine();
-
-            Console.WriteLine("Password:");
-            password = Console.ReadLine();
-
-
             ReConfigure();
         }
     }
 
     private void Init() {
-        Console.WriteLine("To see list of availabe commands, type 'IAmAUselessMemberOfSocietyAndRequireALobotomyMarker'");
+        DisplayCommands();
 
         while (true) {
             Console.WriteLine();
@@ -109,37 +99,4 @@ public class Program {
 
         Console.WriteLine(responseString.Result);
     }
-
-    // private bool ConnectPost() {
-    //     HttpClient client = new();
-
-    //     Dictionary<string, string> values = new()
-    //     {
-    //         {"auth_user", username},
-    //         {"auth_pass", password},
-    //     };
-
-    //     var content = new FormUrlEncodedContent(values);
-
-    //     var response = client.PostAsync(URL, content).Result;
-
-    //     var responseString = response.Content.ReadAsStringAsync();
-
-    //     Console.WriteLine(responseString.Result);
-
-    //     return true;
-    // }
-
-    // private void ConnectRestSharp() {
-    //     var client = new RestClient("http://10.10.0.251:8002/index.php?zone=cp_htl");
-    //     client.Timeout = -1;
-    //     var request = new RestRequest(Method.POST);
-    //     request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
-    //     request.AddParameter("auth_user", "KellermayrJ180130");
-    //     request.AddParameter("auth_pass", "chiligreen123");
-    //     request.AddParameter("accept", "Anmelden");
-    //     request.AddParameter("rediurl", "http://10.10.0.2/captiveportal/cp_logon_done.html");
-    //     IRestResponse response = client.Execute(request);
-    //     Console.WriteLine(response.Content);
-    // }
 }
