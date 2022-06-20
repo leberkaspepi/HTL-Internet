@@ -1,4 +1,6 @@
-﻿namespace SchuiInternet;
+﻿using HtmlAgilityPack;
+
+namespace SchuiInternet;
 
 public class Program {
     private const string URL = "http://10.10.0.251:8002/index.php?zone=cp_htl";
@@ -74,7 +76,10 @@ public class Program {
 
         File.WriteAllLines(filePath, new string[] { username, password });
 
+        Console.Clear();
+        
         Console.WriteLine("perfekt, fetzt");
+        DisplayCommands();
     }
 
     private void ConnectPost() {
@@ -95,8 +100,16 @@ public class Program {
 
         var response = client.PostAsync(URL, content);
 
-        var responseString = response.Result.Content.ReadAsStringAsync();
+        var responseString = response.Result.Content.ReadAsStringAsync().Result;
 
-        Console.WriteLine(responseString.Result);
+        HtmlDocument doc = new();
+        doc.LoadHtml(responseString);
+
+        var p = doc.DocumentNode.Descendants("p");
+
+        if (p.Any())
+            Console.WriteLine(p.First().InnerHtml);
+        else
+            Console.WriteLine(responseString);
     }
 }
