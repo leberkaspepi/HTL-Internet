@@ -3,6 +3,7 @@
 namespace SchuiInternet;
 
 public class Program {
+    #region Vars
     private const string URL = "http://10.10.0.251:8002/index.php?zone=cp_htl";
     private const string REDIURL = "http://10.10.0.2/captiveportal/cp_logon_done.html";
 
@@ -11,9 +12,19 @@ public class Program {
 
     private readonly string filePath;
 
-    public static void Main(string[] args) => new Program().Init();
+    private readonly Dictionary<Command, Action> commands;
+    #endregion
 
+
+    #region Ctor
+    public static void Main(string[] args) => new Program().Init(args);
     public Program() {
+        commands = new() {
+            [Command.display] = DisplayCommands,
+            [Command.connect] = Connect,
+            [Command.reconfigure] = ReConfigure,
+        };
+
         string winUser = Environment.UserName;
         filePath = $@"C:\Users\{winUser}\.conconfig";
 
@@ -30,36 +41,36 @@ public class Program {
         }
     }
 
-    private void Init() {
-        DisplayCommands();
+    private void Init(string[] args) {
+        if (args.Length == 0) {
+            DisplayCommands();
+            Environment.Exit(1);
+        }
 
-        while (true) {
-            Console.WriteLine();
-            string input = Console.ReadLine();
+        bool parsed = Enum.TryParse(args[0], out Command c);
 
-            switch (input) {
-                case "connect":
-                ConnectPost();
-                break;
-                case "reconfig":
-                ReConfigure();
-                break;
-                case "IAmAUselessMemberOfSocietyAndRequireALobotomyMarker":
-                case "help":
-                DisplayCommands();
-                break;
-            }
+        if (!parsed) {
+            Console.WriteLine("Invalid command");
+            DisplayCommands();
+            Environment.Exit(1);
+        }
+        else {
+            commands[c].Invoke();
         }
     }
+    #endregion
 
-    private void DisplayCommands() {
+    #region ConsoleFunctions
+    public void DisplayCommands() {
         Console.WriteLine("connect: try to connect with saved credentials");
-        Console.WriteLine("reconfig: re-enter credentials\n");
+        Console.WriteLine("reconfig: re-enter credentials");
+
+        Console.WriteLine();
     }
 
-    private void ReConfigure() {
-        File.Delete(filePath);
-        File.Create(filePath).Close();
+    public void ReConfigure() {
+        if (!File.Exists(filePath))
+            File.Create(filePath).Close();
 
         Console.WriteLine("Username:");
         username = Console.ReadLine();
@@ -68,21 +79,16 @@ public class Program {
         password = Console.ReadLine();
 
         if (username == null || username == "" || password == null || password == "") {
-            Console.WriteLine("konnst du wortwörtlich kan string eigebn?");
-            Console.WriteLine("kumm geh scheißn und moch da dei config file söwa (oda start afoch donwengung neich)");
+            Console.WriteLine("Invalid credentials\n");
 
-            Environment.Exit(1);
+            ReConfigure();
+            return;
         }
 
         File.WriteAllLines(filePath, new string[] { username, password });
-
-        Console.Clear();
-        
-        Console.WriteLine("perfekt, fetzt");
-        DisplayCommands();
     }
 
-    private void ConnectPost() {
+    public void Connect() {
         HttpClient client = new();
         //client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
 
@@ -96,20 +102,29 @@ public class Program {
              { "rediurl", REDIURL }
         };
 
-        var content = new FormUrlEncodedContent(values);
+        FormUrlEncodedContent content = new(values);
 
-        var response = client.PostAsync(URL, content);
+        Task<HttpResponseMessage> response = client.PostAsync(URL, content);
 
-        var responseString = response.Result.Content.ReadAsStringAsync().Result;
+        string responseString = response.Result.Content.ReadAsStringAsync().Result;
+
+        Console.WriteLine(responseString);
 
         HtmlDocument doc = new();
         doc.LoadHtml(responseString);
 
-        var p = doc.DocumentNode.Descendants("p");
+        //IEnumerable<HtmlNode> p = doc.DocumentNode.Descendants("p");
 
-        if (p.Any())
-            Console.WriteLine(p.First().InnerHtml);
-        else
-            Console.WriteLine(responseString);
+        //if (p.Any())
+        //    Console.WriteLine(p.First().InnerHtml);
+        //else
+        //    Console.WriteLine(responseString);
     }
+    #endregion
+}
+
+public enum Command {
+    display,
+    connect,
+    reconfigure,
 }
