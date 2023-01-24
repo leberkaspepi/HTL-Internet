@@ -63,21 +63,7 @@ public class Program {
         username = Console.ReadLine();
 
         Console.WriteLine("Password:");
-        password = "";
-
-        ConsoleKey key;
-        do {
-            key = Console.ReadKey(true).Key;
-
-            if (key == ConsoleKey.Backspace && password.Length > 0) {
-                Console.Write("\b \b");
-                password = password[0..^1];
-            }
-            else if (!char.IsControl(Console.ReadKey(true).KeyChar)) {
-                Console.Write("*");
-                password += Console.ReadKey(true).KeyChar;
-            }
-        } while (key != ConsoleKey.Enter);
+        password = GetObscuredPassword();
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password)) {
             Console.WriteLine("Invalid credentials\n");
@@ -91,39 +77,63 @@ public class Program {
         File.WriteAllLines(filePath, new string[] { username, password });
     }
 
+    private string GetObscuredPassword() {
+        string pass = "";
+
+        ConsoleKey key;
+        do {
+            key = Console.ReadKey(true).Key;
+
+            if (key == ConsoleKey.Backspace & pass.Length > 0) {
+                Console.Write("\b \b");
+                pass = pass[0..^1];
+                continue;
+            }
+            else if (!char.IsControl(Console.ReadKey(true).KeyChar)) {
+                Console.Write("*");
+                pass += key;
+            }
+        } while (key != ConsoleKey.Enter);
+
+        return pass;
+    }
+
     public void Connect() {
-        HttpClient client = new();
-        //client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
+        using (HttpClient client = new()) {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
 
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
+            Dictionary<string, string> values = new() {
+                { "auth_user", username },
+                { "auth_pass", password },
+                { "accept", "Anmelden" },
+                { "rediurl", REDIURL }
+            };
 
-        Dictionary<string, string> values = new()
-        {
-             { "auth_user", username },
-             { "auth_pass", password },
-             { "accept", "Anmelden" },
-             { "rediurl", REDIURL }
-        };
+            FormUrlEncodedContent content = new(values);
 
-        FormUrlEncodedContent content = new(values);
+            var reply = client.PostAsync(URL, content).Result;
 
-        var reply = client.PostAsync(URL, content);
+            string page = reply.Content.ReadAsStringAsync().Result;
 
-        string page = reply.Result.Content.ReadAsStringAsync().Result;
+            if (page == "You are connected.") {
+                Console.WriteLine("Already connected");
+                return;
+            }
 
-        if (page == "You are connected.") {
-            Console.WriteLine("Already connected");
-            return;
-        }
-
-        if (page.Contains("erfolgreich")) {
-            Console.WriteLine("Connected");
-            return;
+            if (page.Contains("erfolgreich")) {
+                Console.WriteLine("Connected");
+                return;
+            }
         }
 
         Console.WriteLine("fetzt ned");
 
-        Console.ReadKey();
+        Console.Write("Passwort numoi eigebn? [Y|n]");
+
+        string input = Console.ReadLine();
+
+        if (input == "" || input.ToUpperInvariant() == "Y")
+            ReConfigure();
     }
     #endregion
 }
