@@ -34,15 +34,13 @@ public class HTLGKR {
 
             ReConfigure();
         }
-
-        Connect();
     }
 
     public void ReConfigure() {
-        Console.WriteLine("Username:");
+        Console.Write("Username: ");
         username = Console.ReadLine();
 
-        Console.WriteLine("Password:");
+        Console.Write("Password: ");
         password = GetObscuredPassword();
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password)) {
@@ -55,6 +53,15 @@ public class HTLGKR {
         Console.WriteLine();
 
         File.WriteAllLines(filePath, new string[] { username, password });
+
+        Console.WriteLine("Attempt connection? [Y|n]");
+
+        ConsoleKeyInfo input = Console.ReadKey();
+
+        Console.WriteLine();
+
+        if (input.Key == ConsoleKey.Enter || char.ToUpperInvariant(input.KeyChar) == 'Y')
+            Connect();
     }
 
     private static string GetObscuredPassword() {
@@ -89,7 +96,7 @@ public class HTLGKR {
 
             string page = reply.Content.ReadAsStringAsync().Result;
 
-            if (page == "You are connected." && page.Contains("erfolgreich")) {
+            if (page == "You are connected." || page.Contains("erfolgreich")) {
                 Console.WriteLine("Connected");
                 return;
             }
@@ -99,9 +106,11 @@ public class HTLGKR {
 
         Console.WriteLine("Re-enter credentials? [Y|n]");
 
-        string input = GetObscuredPassword();
+        ConsoleKeyInfo input = Console.ReadKey();
 
-        if (input == "" || input.ToUpperInvariant() == "Y")
+        Console.WriteLine();
+
+        if (input.Key == ConsoleKey.Enter || char.ToUpperInvariant(input.KeyChar) == 'Y')
             ReConfigure();
     }
 }
