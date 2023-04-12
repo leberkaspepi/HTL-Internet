@@ -34,6 +34,8 @@ public class HTLGKR {
 
             ReConfigure();
         }
+
+        Connect();
     }
 
     public void ReConfigure() {
